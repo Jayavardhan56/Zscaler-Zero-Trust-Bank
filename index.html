@@ -14,29 +14,26 @@
     <div id="loginStatus" class="msg"></div>
   </div>
 
-  <!-- ✅ 1. Load Auth0 SDK FIRST -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+  <!-- ✅ Load Auth0 SDK (latest, reliable CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.5.4/dist/auth0-spa-js.production.js"></script>
 
-  <!-- ✅ 2. Then run our login logic AFTER the SDK is loaded -->
   <script>
     window.addEventListener("DOMContentLoaded", async () => {
       try {
         if (typeof createAuth0Client !== "function") {
           document.getElementById("loginStatus").textContent =
-            "❌ Auth0 SDK failed to load. Check internet or CDN.";
+            "❌ Auth0 SDK failed to load. Please check your internet connection.";
           return;
         }
 
-        // Initialize Auth0
         const auth0 = await createAuth0Client({
-          domain: "dev-qlmmy3wsd6z2uizp.us.auth0.com",        // e.g. dev-xyz123.us.auth0.com
-          clientId: "MdOH5NIKiGYpDkuGvWhyGkc6wUc6RzV6",   // from your Auth0 dashboard
+          domain: "dev-qlmmy3wsd6z2uizp.us.auth0.com",       // e.g. dev-abc123.us.auth0.com
+          clientId: "MdOH5NIKiGYpDkuGvWhyGkc6wUc6RzV6",  // from Auth0 dashboard
           authorizationParams: {
             redirect_uri: window.location.origin + "/dashboard.html"
           }
         });
 
-        // Handle redirect callback
         if (window.location.search.includes("code=") &&
             window.location.search.includes("state=")) {
           await auth0.handleRedirectCallback();
@@ -48,6 +45,7 @@
 
         if (isAuthenticated) {
           const user = await auth0.getUser();
+          console.log("✅ Logged in as:", user);
           sessionStorage.setItem("ZT_ACTIVE_USER", JSON.stringify(user));
           status.textContent = `✅ Welcome ${user.name || user.email}`;
           window.location.href = "dashboard.html";
