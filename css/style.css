@@ -1,0 +1,20 @@
+:root{
+  --bg:#0b1220; --card:#071826; --accent:#06b6d4; --muted:#9aa6b2; --danger:#ef4444; --success:#10b981;
+}
+*{box-sizing:border-box;font-family:Inter,Segoe UI,Roboto,Arial}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#040812,#0b1220);color:#e6eef3}
+.login-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-box{width:390px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:22px;border:1px solid rgba(255,255,255,0.03)}
+.login-box h1{margin:0;font-size:20px}
+.subtitle{color:var(--muted);margin:8px 0 14px;font-size:13px}
+.session-notice{background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;margin-bottom:12px;color:var(--muted)}
+.input-group{margin-bottom:12px}
+.input-group label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.input-group input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#eaf4ff}
+.btn-login{width:100%;padding:10px;border-radius:9px;background:linear-gradient(90deg,var(--accent),#3dd4c9);border:none;color:#012;font-weight:600;cursor:pointer}
+.msg{height:20px;margin-top:8px;font-size:13px}
+.msg.error{color:var(--danger)}
+.msg.success{color:var(--success)}
+.actions{display:flex;gap:8px;margin-top:10px}
+.btn-link{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px}
+.security-note{margin-top:12px;color:var(--muted);font-size:12px}

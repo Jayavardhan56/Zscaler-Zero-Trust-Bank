@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ZeroTrust Bank — Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css"/>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="side">
+      <div class="brand"><h2>ZeroTrust Bank</h2><small>Demo — IP-protected</small></div>
+      <div class="user-card">
+        <div id="userName" class="user-name">—</div>
+        <div id="userBal" class="user-balance">₹0.00</div>
+      </div>
+
+      <div class="session-panel">
+        <div>Session expires in: <span id="sessCountdown">—</span></div>
+        <div>Current public IP: <span id="curIP">—</span></div>
+      </div>
+
+      <nav class="nav">
+        <button id="logoutBtn" class="nav-btn">Logout</button>
+        <button id="refreshBtn" class="nav-btn">Refresh</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <section class="panel">
+        <h3>Transfer</h3>
+        <form id="transferForm" autocomplete="off">
+          <label>To (username)</label><input id="toUser" type="text" required />
+          <label>Amount (₹)</label><input id="amount" type="number" min="1" required />
+          <div class="row">
+            <button class="btn" type="submit">Transfer</button>
+            <button id="clearHist" class="btn ghost" type="button">Clear History</button>
+          </div>
+          <p id="txMsg" class="msg"></p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h3>Transaction History</h3>
+        <div class="history-wrap">
+          <table id="historyTable"><thead><tr><th>When</th><th>Type</th><th>Other</th><th>Amount</th><th>Balance</th></tr></thead><tbody></tbody></table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/transfer.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ip-monitor.js"></script>
+  <script src="js/security.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
