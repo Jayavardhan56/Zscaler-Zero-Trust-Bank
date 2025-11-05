@@ -1,107 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>ZeroTrust Bank — Login</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
   <div class="login-container">
-    <div class="login-box">
-      <h1>💳 ZeroTrust Bank — Test</h1>
-      <p class="subtitle">Secure demo (Local users). Auth0 can be plugged later.</p>
+    <h1>🏦 ZeroTrust Bank</h1>
+    <p>Experience browser-based Zero Trust security — now with Auth0 login.</p>
 
-      <div id="sessionNotice" class="session-notice">Session: <span id="sessionTimer">—</span></div>
+    <button id="loginBtn" class="btn">🔐 Login with Auth0</button>
 
-      <form id="loginForm" autocomplete="off">
-        <div class="input-group">
-          <label for="username">Username</label>
-          <input id="username" type="text" placeholder="alice / bob / charlie" required />
-        </div>
-        <div class="input-group">
-          <label for="password">Password</label>
-          <input id="password" type="password" placeholder="demo password" required />
-        </div>
-
-        <button type="submit" class="btn-login">Login</button>
-        <p id="loginMsg" class="msg"></p>
-      </form>
-
-      <div class="actions">
-        <button id="seedBtn" class="btn-link">Create demo users</button>
-        <button id="auth0Btn" class="btn-link">(Optional) Login with Auth0 — hook later</button>
-      </div>
-
-      <div class="security-note">
-        <small>IP check & session enforced. If public IP changes while you’re logged in, you'll be logged out.</small>
-      </div>
-    </div>
+    <div id="loginStatus" class="msg"></div>
   </div>
 
-  <script src="js/storage.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/ip-monitor.js"></script>
+  <!-- ==================== Scripts ==================== -->
+  <!-- Auth0 SDK -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
 
   <script>
-    // Helpers for UI wiring
-    document.getElementById('seedBtn').addEventListener('click', () => {
-      StorageAPI.createSampleUsers(true);
-      const m = document.getElementById('loginMsg');
-      m.textContent = "Demo users created (alice,bob,charlie) with passwords equal to username + '123'";
-      m.className = 'msg success';
-    });
+    // Initialize Auth0 SPA Client
+    let auth0Client = null;
 
-    // Placeholder for Auth0 hook — when you plug Auth0, call Auth.loginWithAuth0()
-    document.getElementById('auth0Btn').addEventListener('click', () => {
-      alert('Auth0 login hook not configured in this build. Use local demo login or ask me to enable Auth0 again.');
-    });
+    async function configureAuth0() {
+      auth0Client = await createAuth0Client({
+        domain: "dev-qlmmy3wsd6z2uizp.us.auth0.com",            // 👉 replace with your domain
+        clientId: "MdOH5NIKiGYpDkuGvWhyGkc6wUc6RzV6",       // 👉 replace with your client ID
+        authorizationParams: {
+          redirect_uri: window.location.origin + "/dashboard.html"
+        }
+      });
 
-    // Login submit
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const u = document.getElementById('username').value.trim();
-      const p = document.getElementById('password').value;
-      const res = await Auth.loginLocal(u, p);
-      const msg = document.getElementById('loginMsg');
-      if (!res.ok) {
-        msg.textContent = res.error;
-        msg.className = 'msg error';
-        return;
-      }
-      msg.textContent = "Login success — setting session...";
-      msg.className = 'msg success';
-
-      // Show session expiry countdown on login page
-      const session = Auth.getSession();
-      if (session) {
-        // show time left
-        const dtEl = document.getElementById('sessionTimer');
-        const update = () => {
-          const ms = session.expiresAt - Date.now();
-          if (ms <= 0) {
-            dtEl.textContent = 'expired';
-            return;
-          }
-          const m = Math.floor(ms / 60000);
-          const s = Math.floor((ms % 60000) / 1000);
-          dtEl.textContent = `${m}m ${s}s`;
-        };
-        update();
-        const iv = setInterval(() => {
-          const now = Auth.getSession();
-          if (!now) { clearInterval(iv); dtEl.textContent = 'expired'; return; }
-          update();
-        }, 1000);
+      // Handle redirect back from Auth0 after login
+      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+        await auth0Client.handleRedirectCallback();
+        window.history.replaceState({}, document.title, "/dashboard.html");
       }
 
-      // Redirect after tiny delay so user sees message
-      setTimeout(()=> location.href = 'dashboard.html', 700);
-    });
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      const status = document.getElementById("loginStatus");
+
+      if (isAuthenticated) {
+        const user = await auth0Client.getUser();
+        console.log("✅ Logged in as:", user);
+        sessionStorage.setItem("ZT_ACTIVE_USER", JSON.stringify(user));
+        status.textContent = `Welcome back, ${user.name || user.email}`;
+        // Redirect to dashboard
+        window.location.href = "dashboard.html";
+      } else {
+        status.textContent = "Please log in to access your dashboard.";
+        document.getElementById("loginBtn").addEventListener("click", async () => {
+          await auth0Client.loginWithRedirect();
+        });
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", configureAuth0);
   </script>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
-<script src="js/auth0-login.js"></script>
-
 </body>
 </html>
-
