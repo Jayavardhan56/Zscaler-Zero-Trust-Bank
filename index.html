@@ -1,61 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>ZeroTrust Bank — Login</title>
-  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <div class="login-container">
-    <h1>🏦 ZeroTrust Bank</h1>
-    <p>Browser-based Zero Trust Banking Simulation</p>
+    <div class="login-box">
+      <h1>💳 ZeroTrust Bank — Test</h1>
+      <p class="subtitle">Secure demo (Local users). Auth0 can be plugged later.</p>
 
-    <form id="loginForm" autocomplete="off">
-      <label>Username</label>
-      <input id="username" type="text" required placeholder="Enter username"/>
+      <div id="sessionNotice" class="session-notice">Session: <span id="sessionTimer">—</span></div>
 
-      <label>Password</label>
-      <input id="password" type="password" required placeholder="Enter password"/>
+      <form id="loginForm" autocomplete="off">
+        <div class="input-group">
+          <label for="username">Username</label>
+          <input id="username" type="text" placeholder="alice / bob / charlie" required />
+        </div>
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="demo password" required />
+        </div>
 
-      <button class="btn" type="submit">Login</button>
-      <p id="loginMsg" class="msg"></p>
-    </form>
+        <button type="submit" class="btn-login">Login</button>
+        <p id="loginMsg" class="msg"></p>
+      </form>
+
+      <div class="actions">
+        <button id="seedBtn" class="btn-link">Create demo users</button>
+        <button id="auth0Btn" class="btn-link">(Optional) Login with Auth0 — hook later</button>
+      </div>
+
+      <div class="security-note">
+        <small>IP check & session enforced. If public IP changes while you’re logged in, you'll be logged out.</small>
+      </div>
+    </div>
   </div>
 
-  <!-- Core scripts -->
   <script src="js/storage.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/security.js"></script>
+  <script src="js/ip-monitor.js"></script>
 
   <script>
-    // Simple local login handler
-    (function(){
-      const form = document.getElementById('loginForm');
-      const msg = document.getElementById('loginMsg');
+    // Helpers for UI wiring
+    document.getElementById('seedBtn').addEventListener('click', () => {
+      StorageAPI.createSampleUsers(true);
+      const m = document.getElementById('loginMsg');
+      m.textContent = "Demo users created (alice,bob,charlie) with passwords equal to username + '123'";
+      m.className = 'msg success';
+    });
 
-      function show(text, cls){
-        msg.textContent = text;
-        msg.className = cls ? 'msg ' + cls : 'msg';
+    // Placeholder for Auth0 hook — when you plug Auth0, call Auth.loginWithAuth0()
+    document.getElementById('auth0Btn').addEventListener('click', () => {
+      alert('Auth0 login hook not configured in this build. Use local demo login or ask me to enable Auth0 again.');
+    });
+
+    // Login submit
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const res = await Auth.loginLocal(u, p);
+      const msg = document.getElementById('loginMsg');
+      if (!res.ok) {
+        msg.textContent = res.error;
+        msg.className = 'msg error';
+        return;
+      }
+      msg.textContent = "Login success — setting session...";
+      msg.className = 'msg success';
+
+      // Show session expiry countdown on login page
+      const session = Auth.getSession();
+      if (session) {
+        // show time left
+        const dtEl = document.getElementById('sessionTimer');
+        const update = () => {
+          const ms = session.expiresAt - Date.now();
+          if (ms <= 0) {
+            dtEl.textContent = 'expired';
+            return;
+          }
+          const m = Math.floor(ms / 60000);
+          const s = Math.floor((ms % 60000) / 1000);
+          dtEl.textContent = `${m}m ${s}s`;
+        };
+        update();
+        const iv = setInterval(() => {
+          const now = Auth.getSession();
+          if (!now) { clearInterval(iv); dtEl.textContent = 'expired'; return; }
+          update();
+        }, 1000);
       }
 
-      form.addEventListener('submit', ev => {
-        ev.preventDefault();
-        const user = document.getElementById('username').value.trim();
-        const pass = document.getElementById('password').value.trim();
-        if (!user || !pass) return show('Enter username and password','error');
-
-        const u = StorageAPI.findUser(user);
-        if (!u || u.password !== pass) {
-          show('Invalid credentials','error');
-          return;
-        }
-
-        Auth.setSession(u.username);
-        show('Login successful! Redirecting...','success');
-        setTimeout(() => location.href = 'dashboard.html', 800);
-      });
-    })();
+      // Redirect after tiny delay so user sees message
+      setTimeout(()=> location.href = 'dashboard.html', 700);
+    });
   </script>
 </body>
 </html>
