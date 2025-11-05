@@ -2,65 +2,60 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>ZeroTrust Bank — Login</title>
   <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
   <div class="login-container">
     <h1>🏦 ZeroTrust Bank</h1>
-    <p>Experience browser-based Zero Trust security — now with Auth0 login.</p>
-    <button id="loginBtn" class="btn">🔐 Login with Auth0</button>
-    <div id="loginStatus" class="msg"></div>
+    <p>Browser-based Zero Trust Banking Simulation</p>
+
+    <form id="loginForm" autocomplete="off">
+      <label>Username</label>
+      <input id="username" type="text" required placeholder="Enter username"/>
+
+      <label>Password</label>
+      <input id="password" type="password" required placeholder="Enter password"/>
+
+      <button class="btn" type="submit">Login</button>
+      <p id="loginMsg" class="msg"></p>
+    </form>
   </div>
 
-  <!-- ✅ Load Auth0 SDK (latest, reliable CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.5.4/dist/auth0-spa-js.production.js"></script>
+  <!-- Core scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/security.js"></script>
 
   <script>
-    window.addEventListener("DOMContentLoaded", async () => {
-      try {
-        if (typeof createAuth0Client !== "function") {
-          document.getElementById("loginStatus").textContent =
-            "❌ Auth0 SDK failed to load. Please check your internet connection.";
+    // Simple local login handler
+    (function(){
+      const form = document.getElementById('loginForm');
+      const msg = document.getElementById('loginMsg');
+
+      function show(text, cls){
+        msg.textContent = text;
+        msg.className = cls ? 'msg ' + cls : 'msg';
+      }
+
+      form.addEventListener('submit', ev => {
+        ev.preventDefault();
+        const user = document.getElementById('username').value.trim();
+        const pass = document.getElementById('password').value.trim();
+        if (!user || !pass) return show('Enter username and password','error');
+
+        const u = StorageAPI.findUser(user);
+        if (!u || u.password !== pass) {
+          show('Invalid credentials','error');
           return;
         }
 
-        const auth0 = await createAuth0Client({
-          domain: "dev-qlmmy3wsd6z2uizp.us.auth0.com",       // e.g. dev-abc123.us.auth0.com
-          clientId: "MdOH5NIKiGYpDkuGvWhyGkc6wUc6RzV6",  // from Auth0 dashboard
-          authorizationParams: {
-            redirect_uri: window.location.origin + "/dashboard.html"
-          }
-        });
-
-        if (window.location.search.includes("code=") &&
-            window.location.search.includes("state=")) {
-          await auth0.handleRedirectCallback();
-          window.history.replaceState({}, document.title, "/dashboard.html");
-        }
-
-        const isAuthenticated = await auth0.isAuthenticated();
-        const status = document.getElementById("loginStatus");
-
-        if (isAuthenticated) {
-          const user = await auth0.getUser();
-          console.log("✅ Logged in as:", user);
-          sessionStorage.setItem("ZT_ACTIVE_USER", JSON.stringify(user));
-          status.textContent = `✅ Welcome ${user.name || user.email}`;
-          window.location.href = "dashboard.html";
-        } else {
-          status.textContent = "Please log in to access your dashboard.";
-          document.getElementById("loginBtn").addEventListener("click", async () => {
-            await auth0.loginWithRedirect();
-          });
-        }
-      } catch (err) {
-        console.error("Auth0 initialization error:", err);
-        document.getElementById("loginStatus").textContent =
-          "⚠️ Auth0 initialization failed. Check console for details.";
-      }
-    });
+        Auth.setSession(u.username);
+        show('Login successful! Redirecting...','success');
+        setTimeout(() => location.href = 'dashboard.html', 800);
+      });
+    })();
   </script>
 </body>
 </html>
