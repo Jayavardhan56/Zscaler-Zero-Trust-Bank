@@ -10,54 +10,59 @@
   <div class="login-container">
     <h1>🏦 ZeroTrust Bank</h1>
     <p>Experience browser-based Zero Trust security — now with Auth0 login.</p>
-
     <button id="loginBtn" class="btn">🔐 Login with Auth0</button>
-
     <div id="loginStatus" class="msg"></div>
   </div>
 
-  <!-- ==================== Scripts ==================== -->
-  <!-- Auth0 SDK -->
+  <!-- ✅ 1. Load Auth0 SDK FIRST -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
 
+  <!-- ✅ 2. Then run our login logic AFTER the SDK is loaded -->
   <script>
-    // Initialize Auth0 SPA Client
-    let auth0Client = null;
-
-    async function configureAuth0() {
-      auth0Client = await createAuth0Client({
-        domain: "dev-qlmmy3wsd6z2uizp.us.auth0.com",            // 👉 replace with your domain
-        clientId: "MdOH5NIKiGYpDkuGvWhyGkc6wUc6RzV6",       // 👉 replace with your client ID
-        authorizationParams: {
-          redirect_uri: window.location.origin + "/dashboard.html"
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        if (typeof createAuth0Client !== "function") {
+          document.getElementById("loginStatus").textContent =
+            "❌ Auth0 SDK failed to load. Check internet or CDN.";
+          return;
         }
-      });
 
-      // Handle redirect back from Auth0 after login
-      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
-        await auth0Client.handleRedirectCallback();
-        window.history.replaceState({}, document.title, "/dashboard.html");
-      }
-
-      const isAuthenticated = await auth0Client.isAuthenticated();
-      const status = document.getElementById("loginStatus");
-
-      if (isAuthenticated) {
-        const user = await auth0Client.getUser();
-        console.log("✅ Logged in as:", user);
-        sessionStorage.setItem("ZT_ACTIVE_USER", JSON.stringify(user));
-        status.textContent = `Welcome back, ${user.name || user.email}`;
-        // Redirect to dashboard
-        window.location.href = "dashboard.html";
-      } else {
-        status.textContent = "Please log in to access your dashboard.";
-        document.getElementById("loginBtn").addEventListener("click", async () => {
-          await auth0Client.loginWithRedirect();
+        // Initialize Auth0
+        const auth0 = await createAuth0Client({
+          domain: "dev-qlmmy3wsd6z2uizp.us.auth0.com",        // e.g. dev-xyz123.us.auth0.com
+          clientId: "MdOH5NIKiGYpDkuGvWhyGkc6wUc6RzV6",   // from your Auth0 dashboard
+          authorizationParams: {
+            redirect_uri: window.location.origin + "/dashboard.html"
+          }
         });
-      }
-    }
 
-    window.addEventListener("DOMContentLoaded", configureAuth0);
+        // Handle redirect callback
+        if (window.location.search.includes("code=") &&
+            window.location.search.includes("state=")) {
+          await auth0.handleRedirectCallback();
+          window.history.replaceState({}, document.title, "/dashboard.html");
+        }
+
+        const isAuthenticated = await auth0.isAuthenticated();
+        const status = document.getElementById("loginStatus");
+
+        if (isAuthenticated) {
+          const user = await auth0.getUser();
+          sessionStorage.setItem("ZT_ACTIVE_USER", JSON.stringify(user));
+          status.textContent = `✅ Welcome ${user.name || user.email}`;
+          window.location.href = "dashboard.html";
+        } else {
+          status.textContent = "Please log in to access your dashboard.";
+          document.getElementById("loginBtn").addEventListener("click", async () => {
+            await auth0.loginWithRedirect();
+          });
+        }
+      } catch (err) {
+        console.error("Auth0 initialization error:", err);
+        document.getElementById("loginStatus").textContent =
+          "⚠️ Auth0 initialization failed. Check console for details.";
+      }
+    });
   </script>
 </body>
 </html>
