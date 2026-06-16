@@ -1,3 +1,3 @@
-This is my Zscaler Project
+ZSCCALER ZERO TRUST BANK:
 
-It is used for secure banking 
+This project is based on the principles which i learned on platform Zscaler Cloud
